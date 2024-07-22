@@ -1,3 +1,8 @@
+'''
+Significant contributions were made to this code by Tim Rogers (@virmitio) some
+of which, although not all, are indicated in the comment lines
+'''
+
 
 import numpy as np
 #from scipy.optimize import least_squares
@@ -15,12 +20,12 @@ def sinFuncLS(x, time, y):
     #return x[0]*np.sin(x[1]*time + x[2]) + x[3] - y
     return sinFunc(time, *x) - y
 
-'''
-This function is only lightly modified from the scipy cookbook recipe found here:
-  https://scipy-cookbook.readthedocs.io/items/SignalSmooth.html
-This version is limited to the 'flat' smoothing style to avoid complexity.
-'''
 def localSmooth(x, window=7):
+    '''
+    This function is only lightly modified from the scipy cookbook recipe found here:
+      https://scipy-cookbook.readthedocs.io/items/SignalSmooth.html
+    This version is limited to the 'flat' smoothing style to avoid complexity.
+    '''
     if x.size < window or window < 3:
         return x
     s=np.r_[x[window-1:0:-1],x,x[-2:-window-1:-1]]
@@ -28,40 +33,40 @@ def localSmooth(x, window=7):
     y=np.convolve(w/w.sum(),s,mode='valid')
     return y
 
-'''
-The following is derived from an answer to a StackOverflow question,
- found here:  https://stackoverflow.com/a/4625132
-Explaination of the format in the following lines:
-Each segment in the 'and' (&) construct is a single-direction comparison
- pass of each value relative to its nth neighbor.
-This means that by performing the comparison pass once in each direction,
- we get the relative valuation from bi-directionally nearby sample values.
-
-np.r_[[True]*n, inputArray[n:] <comparison_op> inputArray[:-n]]
-      -- This is the forward comparison, which compares each value
-         with its nth forward neighbor.
-
-np.r_[inputArray[:-n] <comparison_op> inputArray[n:], [True]*n]
-      -- This is the backward comparison, which compares each value
-         with its nth previous neighbor.
-'''
 def localCompare(inputArray, radius=1, op=np.less):
+    '''
+    The following is derived from an answer to a StackOverflow question,
+     found here:  https://stackoverflow.com/a/4625132
+    Explaination of the format in the following lines:
+    Each segment in the 'and' (&) construct is a single-direction comparison
+     pass of each value relative to its nth neighbor.
+    This means that by performing the comparison pass once in each direction,
+     we get the relative valuation from bi-directionally nearby sample values.
+    
+    np.r_[[True]*n, inputArray[n:] <comparison_op> inputArray[:-n]]
+          -- This is the forward comparison, which compares each value
+             with its nth forward neighbor.
+    
+    np.r_[inputArray[:-n] <comparison_op> inputArray[n:], [True]*n]
+          -- This is the backward comparison, which compares each value
+             with its nth previous neighbor.
+    '''
     output = np.full_like(inputArray, True, dtype=np.bool)
     for n in range(1,radius+1):
         output &= np.r_[[True]*n, op(inputArray[n:], inputArray[:-n])] & np.r_[op(inputArray[:-n], inputArray[n:]), [True]*n]
     return output
 
-'''
-Assumes the following regarding parameters:
-	timesteps - array of timesteps, shape (steps, )
-	data - array of data, shape (steps, data_axis)
-This code currently operates only on the first data axis [:,0].  This will get paramaterized later.
-This function will return a list of tuples, where:
-  output[data_axis][0] == the calculated guess parameters
-  output[data_axis][1] == the array returned from least_squares()
-  output[data_axis][2] == the function used with least_squares() (intended for plotting use)
-'''
 def FitSine(timesteps, data, frequencyResolutionHz=0.0001):
+    '''
+    Assumes the following regarding parameters:
+    	timesteps - array of timesteps, shape (steps, )
+    	data - array of data, shape (steps, data_axis)
+    This code currently operates only on the first data axis [:,0].  This will get paramaterized later.
+    This function will return a list of tuples, where:
+      output[data_axis][0] == the calculated guess parameters
+      output[data_axis][1] == the array returned from least_squares()
+      output[data_axis][2] == the function used with least_squares() (intended for plotting use)
+    '''
     timeStepSize = np.mean(timesteps[1:] - timesteps[:-1]) # average timestep duration
     output = []
     for dim in range(data.shape[-1]):
